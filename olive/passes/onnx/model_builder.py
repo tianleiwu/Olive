@@ -270,6 +270,16 @@ class ModelBuilder(Pass):
             }
         )
 
+        # onnxruntime-genai >= 0.15 moved Hugging Face config loading out of `create_model` into
+        # `parse_extra_options`, which is a CLI-only helper that expects "key=value" strings. Olive
+        # already passes typed values, so supply just the piece `create_model` needs.
+        try:
+            from onnxruntime_genai.models.builder import get_hf_details
+        except ImportError:
+            get_hf_details = None
+        if get_hf_details is not None and "hf_details" not in extra_args:
+            extra_args["hf_details"] = get_hf_details(model_path, input_path, HF_HUB_CACHE, extra_args)
+
         # Override extra options with user provided in extra_options parameter
         if config.extra_options:
             extra_args.update(config.extra_options)

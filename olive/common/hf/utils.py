@@ -491,6 +491,11 @@ def get_module_file(
 
 def get_generation_config(model_name_or_path: str, **kwargs) -> Optional["GenerationConfig"]:
     """Get HF model's generation config for the given model_name_or_path. If not found, return None."""
+    # torch_dtype/dtype are irrelevant when loading a generation config and, if passed as a
+    # torch.dtype object, break transformers' generation config logging (json serialization of
+    # the dtype object raises a TypeError). Strip them to avoid the crash.
+    kwargs.pop("torch_dtype", None)
+    kwargs.pop("dtype", None)
     try:
         return from_pretrained(GenerationConfig, model_name_or_path, "model", **kwargs)
     except OSError:
